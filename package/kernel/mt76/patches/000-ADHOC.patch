@@ -1,0 +1,55 @@
+diff -uh mt76-2016-06-17/mt7603_debugfs.c mt76-2016-06-17.orig/mt7603_debugfs.c
+--- mt76-2016-06-17/mt7603_debugfs.c	2016-08-29 14:06:50.000000000 +0200
++++ mt76-2016-06-17.orig/mt7603_debugfs.c	2016-10-03 13:59:37.000000000 +0200
+@@ -26,6 +26,7 @@
+ 		[RESET_CAUSE_RX_BUSY] = "RX DMA busy stuck",
+ 		[RESET_CAUSE_RX_PSE_BUSY] = "RX PSE busy stuck",
+ 		[RESET_CAUSE_BEACON_STUCK] = "Beacon stuck",
++		[RESET_CAUSE_TXS_FAILED] = "TXS Failurers",
+ 	};
+ 	int i;
+ 
+diff -uh mt76-2016-06-17/mt7603.h mt76-2016-06-17.orig/mt7603.h
+--- mt76-2016-06-17/mt7603.h	2016-08-29 14:06:50.000000000 +0200
++++ mt76-2016-06-17.orig/mt7603.h	2016-10-03 13:55:44.000000000 +0200
+@@ -96,6 +96,7 @@
+ 	RESET_CAUSE_RX_BUSY,
+ 	RESET_CAUSE_BEACON_STUCK,
+ 	RESET_CAUSE_RX_PSE_BUSY,
++	RESET_CAUSE_TXS_FAILED,
+ 	__RESET_CAUSE_MAX
+ };
+ 
+diff -uh mt76-2016-06-17/mt7603_mac.c mt76-2016-06-17.orig/mt7603_mac.c
+--- mt76-2016-06-17/mt7603_mac.c	2016-08-29 14:06:50.000000000 +0200
++++ mt76-2016-06-17.orig/mt7603_mac.c	2016-10-04 14:18:07.000000000 +0200
+@@ -646,7 +646,7 @@
+ 
+ 	if (info->flags & IEEE80211_TX_CTL_NO_ACK) {
+ 		txwi[1] |= cpu_to_le32(MT_TXD1_NO_ACK);
+-		pid = MT_PID_NOACK;
++		//	pid = MT_PID_NOACK;
+ 	}
+ 
+ 	txwi[2] = cpu_to_le32(
+@@ -852,12 +852,17 @@
+ 	flags |= cb->flags;
+ 	cb->flags = flags;
+ 
+-	if ((flags & done) != done)
++	if ((flags & done) != done) {
++		if (flags & MT7603_CB_TXS_FAILED) {
++			dev->reset_cause[RESET_CAUSE_TXS_FAILED]++;
++		}
+ 		return;
++	}
+ 
+-	if (flags & MT7603_CB_TXS_FAILED)
++	if (flags & MT7603_CB_TXS_FAILED) {
+ 		ieee80211_free_txskb(mt76_hw(dev), skb);
+-	else
++		dev->reset_cause[RESET_CAUSE_TXS_FAILED]++;
++	} else
+ 		ieee80211_tx_status(mt76_hw(dev), skb);
+ }
+ 
