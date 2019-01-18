@@ -9,36 +9,88 @@ include $(INCLUDE_DIR)/image.mk
 
 KERNEL_LOADADDR := 0x20008000
 
+define Build/at91-install-zImage
+    $(CP) $(KDIR)/zImage $@
+endef
+
 ifeq ($(SUBTARGET),legacy)
 include ./legacy.mk
-UBIFS_OPTS := -m 2048 -e 126KiB -c 2048
+endif
+ifeq ($(SUBTARGET),sama5d2)
+include ./sama5d2.mk
+endif
+ifeq ($(SUBTARGET),sama5d3)
+include ./sama5d3.mk
+endif
+ifeq ($(SUBTARGET),sama5d4)
+include ./sama5d4.mk
 endif
 
-ifeq ($(SUBTARGET),sama5)
-include ./sama5.mk
-ifeq ($(TARGET_DEVICES),at91-sama5d4_xplained)
-  UBIFS_OPTS := -e 0x3e000 -c 2082 -m 0x1000 -x lzo
-  UBINIZE_OPTS := -m 0x1000 -p 0x40000
-else
-  UBIFS_OPTS := -m 2048 -e 124KiB -c 2048
-endif
-endif
+AT91_SD_BOOT_PARTSIZE:=64
+FAT32_BLOCK_SIZE:=1024
+FAT32_BLOCKS:=$(shell echo \
+  $$(($(AT91_SD_BOOT_PARTSIZE)*1024*1024/$(FAT32_BLOCK_SIZE))))
 
 define Device/Default
+  $(Device/default-nand)
   PROFILES := Default
-  FILESYSTEMS := squashfs ubifs
+  FILESYSTEMS := squashfs ubifs ext4
   DEVICE_DTS := $(1)
   KERNEL_NAME := zImage
   KERNEL_SIZE := 4096k
   KERNEL := kernel-bin | append-dtb | lzma | uImage lzma
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
-  SUBPAGESIZE := 512
-  DTB_SIZE :=
+  DTB_SIZE := 128k
 endef
 
 define Device/dtb
   KERNEL := kernel-bin | lzma | uImage lzma
+endef
+
+define Build/at91-sdcard
+  $(if $(findstring ext4,$@), \
+  rm -f $@.boot
+  mkfs.fat -C $@.boot $(FAT32_BLOCKS)
+
+  mkenvimage -s 0x4000 -o $(BIN_DIR)/uboot.env \
+        ./boards/$(DEVICE_NAME:at91-%=%)/uboot-env.txt
+  mcopy -i $@.boot $(BIN_DIR)/uboot.env ::uboot.env
+
+  cp $(KDIR)/zImage $(BIN_DIR)/at91dtoverlay-$(DEVICE_NAME:at91-%=%)/
+
+  cp $(DTS_DIR)/$(DEVICE_NAME).dtb $(BIN_DIR)/at91dtoverlay-$(DEVICE_NAME:at91-%=%)/
+
+  PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) \
+  mkimage -f $(BIN_DIR)/at91dtoverlay-$(DEVICE_NAME:at91-%=%)/$(DEVICE_NAME:at91-%=%).its \
+     $(BIN_DIR)/$(DEVICE_NAME:at91-%=%).itb
+
+  mcopy -i $@.boot $(BIN_DIR)/$(DEVICE_NAME:at91-%=%).itb \
+	 ::$(DEVICE_NAME:at91-%=%).itb
+
+  mcopy -i $@.boot \
+    $(BIN_DIR)/u-boot-$(DEVICE_NAME:at91-%=%)_mmc/u-boot.bin \
+    ::u-boot.bin
+
+  mcopy -i $@.boot \
+    $(BIN_DIR)/at91bootstrap-$(DEVICE_NAME:at91-%=%)sd*/at91bootstrap.bin \
+    ::BOOT.bin
+
+  ./gen_at91_sdcard_img.sh \
+      $@.img \
+      $@.boot \
+      $(KDIR)/root.ext4 \
+      $(AT91_SD_BOOT_PARTSIZE) \
+      $(CONFIG_TARGET_ROOTFS_PARTSIZE)
+
+  gzip -nc9 $@.img > $@
+
+  rm -fvr $@.img $@.boot \
+     $(BIN_DIR)/at91dtoverlay-$(DEVICE_NAME:at91-%=%)/*.dtb \
+	 $(BIN_DIR)/at91dtoverlay-$(DEVICE_NAME:at91-%=%)/zImage )
+endef
+
+define Device/evaluation-sdimage
+  IMAGES += sdcard.img.gz
+  IMAGE/sdcard.img.gz := at91-sdcard
 endef
 
 define Device/evaluation
@@ -50,7 +102,7 @@ endef
 
 define Device/evaluation-zImage
   IMAGES += zImage
-  IMAGE/zImage := install-zImage
+  IMAGE/zImage := at91-install-zImage
 endef
 
 define Device/evaluation-dtb
@@ -59,6 +111,12 @@ define Device/evaluation-dtb
   $(Device/evaluation-zImage)
   IMAGES += dtb
   IMAGE/dtb := install-dtb
+endef
+
+define Device/evaluation-fit
+  $(Device/evaluation)
+  KERNEL_SUFFIX := -fit-uImage.itb
+  KERNEL := kernel-bin | lzma | fit lzma $$(DTS_DIR)/$$(DEVICE_DTS).dtb
 endef
 
 define Device/production
@@ -70,7 +128,6 @@ endef
 define Device/production-dtb
   $(Device/production)
   $(Device/dtb)
-  DTB_SIZE := 128k
   IMAGE/factory.bin := append-dtb | pad-to $$$$(DTB_SIZE) \
 	  | append-kernel | pad-to $$$$(KERNEL_SIZE) | append-ubi
 endef

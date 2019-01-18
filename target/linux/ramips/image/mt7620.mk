@@ -2,7 +2,8 @@
 # MT7620A Profiles
 #
 
-DEVICE_VARS += TPLINK_FLASHLAYOUT TPLINK_HWID TPLINK_HWREV TPLINK_HWREVADD TPLINK_HVERSION
+DEVICE_VARS += TPLINK_FLASHLAYOUT TPLINK_HWID TPLINK_HWREV TPLINK_HWREVADD TPLINK_HVERSION \
+	DLINK_ROM_ID DLINK_FAMILY_MEMBER DLINK_FIRMWARE_SIZE
 
 define Build/elecom-header
 	cp $@ $(KDIR)/v_0.0.0.bin
@@ -10,7 +11,9 @@ define Build/elecom-header
 		mkhash md5 $(KDIR)/v_0.0.0.bin && \
 		echo 458 \
 	) | mkhash md5 > $(KDIR)/v_0.0.0.md5
-	$(STAGING_DIR_HOST)/bin/tar -cf $@ -C $(KDIR) v_0.0.0.bin v_0.0.0.md5
+	$(STAGING_DIR_HOST)/bin/tar -c \
+		$(if $(SOURCE_DATE_EPOCH),--mtime=@$(SOURCE_DATE_EPOCH)) \
+		-f $@ -C $(KDIR) v_0.0.0.bin v_0.0.0.md5
 endef
 
 define Build/zyimage
@@ -25,6 +28,14 @@ define Device/ai-br100
 endef
 TARGET_DEVICES += ai-br100
 
+define Device/alfa-network_ac1200rm
+  DTS := AC1200RM
+  IMAGE_SIZE := 16064k
+  DEVICE_TITLE := ALFA Network AC1200RM
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci uboot-envtools
+endef
+TARGET_DEVICES += alfa-network_ac1200rm
+
 define Device/Archer
   TPLINK_HWREVADD := 0
   TPLINK_HVERSION := 3
@@ -33,20 +44,6 @@ define Device/Archer
   IMAGE/factory.bin := tplink-v2-image -e
   IMAGE/sysupgrade.bin := tplink-v2-image -s -e | append-metadata
 endef
-
-define Device/ArcherC20
-  $(Device/Archer)
-  DTS := ArcherC20
-  SUPPORTED_DEVICES := c20
-  TPLINK_FLASHLAYOUT := 8Mmtk
-  TPLINK_HWID := 0xc2000001
-  TPLINK_HWREV := 0x44
-  TPLINK_HWREVADD := 0x1
-  IMAGES += factory.bin
-  DEVICE_TITLE := TP-Link ArcherC20
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport
-endef
-TARGET_DEVICES += ArcherC20
 
 define Device/ArcherC20i
   $(Device/Archer)
@@ -86,6 +83,13 @@ define Device/ArcherMR200
 endef
 TARGET_DEVICES += ArcherMR200
 
+define Device/bocco
+  DTS := BOCCO
+  DEVICE_TITLE := YUKAI Engineering BOCCO
+  DEVICE_PACKAGES := kmod-sound-core kmod-sound-mt7620 kmod-i2c-ralink
+endef
+TARGET_DEVICES += bocco
+
 define Device/c108
   DTS := C108
   IMAGE_SIZE := 16777216
@@ -103,7 +107,9 @@ TARGET_DEVICES += cf-wr800n
 define Device/cs-qr10
   DTS := CS-QR10
   DEVICE_TITLE := Planex CS-QR10
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-i2c-core kmod-i2c-ralink kmod-sound-core kmod-sound-mtk kmod-sdhci-mt7620
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci \
+	kmod-sound-core kmod-sound-mt7620 \
+	kmod-i2c-ralink kmod-sdhci-mt7620
 endef
 TARGET_DEVICES += cs-qr10
 
@@ -137,7 +143,7 @@ define Device/dch-m225
 	seama-seal -m "signature=wapn22_dlink.2013gui_dap1320b" | \
 	check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := D-Link DCH-M225
-  DEVICE_PACKAGES := kmod-mt76
+  DEVICE_PACKAGES := kmod-mt76 kmod-sound-core kmod-sound-mt7620 kmod-i2c-ralink
 endef
 TARGET_DEVICES += dch-m225
 
@@ -147,6 +153,44 @@ define Device/dir-810l
   DEVICE_TITLE := D-Link DIR-810L
 endef
 TARGET_DEVICES += dir-810l
+
+define Device/dlink_dwr-116-a1
+  DTS := DWR-116-A1
+  DEVICE_TITLE := D-Link DWR-116 A1/A2
+  DEVICE_PACKAGES := kmod-usb2 jboot-tools
+  DLINK_ROM_ID := DLK6E3803001
+  DLINK_FAMILY_MEMBER := 0x6E38
+  DLINK_FIRMWARE_SIZE := 0x7E0000
+  KERNEL := $(KERNEL_DTB)
+  IMAGES += factory.bin
+  IMAGE/sysupgrade.bin := mkdlinkfw | pad-rootfs | append-metadata
+  IMAGE/factory.bin := mkdlinkfw | pad-rootfs | mkdlinkfw-factory
+endef
+TARGET_DEVICES += dlink_dwr-116-a1
+
+define Device/dlink_dwr-921-c1
+  DTS := DWR-921-C1
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := D-Link DWR-921 C1
+  DLINK_ROM_ID := DLK6E2414001
+  DLINK_FAMILY_MEMBER := 0x6E24
+  DLINK_FIRMWARE_SIZE := 0xFE0000
+  KERNEL := $(KERNEL_DTB)
+  IMAGES += factory.bin
+  IMAGE/sysupgrade.bin := mkdlinkfw | pad-rootfs | append-metadata
+  IMAGE/factory.bin := mkdlinkfw | pad-rootfs | mkdlinkfw-factory
+  DEVICE_PACKAGES := jboot-tools \
+	kmod-usb2 kmod-usb-net-qmi-wwan kmod-usb-serial-option uqmi
+endef
+TARGET_DEVICES += dlink_dwr-921-c1
+
+define Device/dlink_dwr-921-c3
+  $(Device/dlink_dwr-921-c1)
+  DEVICE_TITLE := D-Link DWR-921 C3
+  DLINK_ROM_ID := DLK6E2414009
+  SUPPORTED_DEVICES := dlink,dwr-921-c1
+endef
+TARGET_DEVICES += dlink_dwr-921-c3
 
 define Device/e1700
   DTS := E1700
@@ -164,10 +208,10 @@ define Device/ex2700
   BLOCKSIZE := 4k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   IMAGES += factory.bin
-  KERNEL := $(KERNEL_DTB) | uImage lzma | pad-offset 64k 64 | append-uImage-fakeroot-hdr
+  KERNEL := $(KERNEL_DTB) | uImage lzma | pad-offset 64k 64 | append-uImage-fakehdr filesystem
   IMAGE/factory.bin := $$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | \
 	netgear-dni
-  DEVICE_PACKAGES := -kmod-mt76
+  DEVICE_PACKAGES := -kmod-mt76 -kmod-mt7603 -kmod-mt76x2 -kmod-mt76-core
   DEVICE_TITLE := Netgear EX2700
 endef
 TARGET_DEVICES += ex2700
@@ -192,6 +236,13 @@ define Device/gl-mt300a
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-mt76
 endef
 TARGET_DEVICES += gl-mt300a
+
+define Device/u25awf-h1
+  DTS := U25AWF-H1
+  IMAGE_SIZE := 16064k
+  DEVICE_TITLE := Kimax U25AWF-H1
+endef
+TARGET_DEVICES += u25awf-h1
 
 define Device/gl-mt300n
   DTS := GL-MT300N
@@ -241,6 +292,7 @@ define Device/kng_rc
   IMAGES += factory.bin
   IMAGE/factory.bin := $$(sysupgrade_bin) | pad-to 64k | check-size $$$$(IMAGE_SIZE) | \
 	zyimage -d 8997 -v "ZyXEL Keenetic Viva"
+  SUPPORTED_DEVICES := kng_rc
 endef
 TARGET_DEVICES += kng_rc
 
@@ -251,6 +303,7 @@ define Device/kn_rc
   IMAGES += factory.bin
   IMAGE/factory.bin := $$(IMAGE/sysupgrade.bin) | pad-to 64k | check-size $$$$(IMAGE_SIZE) | \
 	zyimage -d 4882 -v "ZyXEL Keenetic Omni"
+  SUPPORTED_DEVICES := kn_rc
 endef
 TARGET_DEVICES += kn_rc
 
@@ -261,6 +314,7 @@ define Device/kn_rf
   IMAGES += factory.bin
   IMAGE/factory.bin := $$(IMAGE/sysupgrade.bin) | pad-to 64k | check-size $$$$(IMAGE_SIZE) | \
 	zyimage -d 2102034 -v "ZyXEL Keenetic Omni II"
+  SUPPORTED_DEVICES := kn_rf
 endef
 TARGET_DEVICES += kn_rf
 
@@ -302,18 +356,21 @@ TARGET_DEVICES += mt7620a
 define Device/mt7620a_mt7530
   DTS := MT7620a_MT7530
   DEVICE_TITLE := MediaTek MT7620a + MT7530 EVB
+  SUPPORTED_DEVICES := mt7620a_mt7530
 endef
 TARGET_DEVICES += mt7620a_mt7530
 
 define Device/mt7620a_mt7610e
   DTS := MT7620a_MT7610e
   DEVICE_TITLE := MediaTek MT7620a + MT7610e EVB
+  SUPPORTED_DEVICES := mt7620a_mt7610e
 endef
 TARGET_DEVICES += mt7620a_mt7610e
 
 define Device/mt7620a_v22sg
   DTS := MT7620a_V22SG
   DEVICE_TITLE := MediaTek MT7620a V22SG
+  SUPPORTED_DEVICES := mt7620a_v22sg
 endef
 TARGET_DEVICES += mt7620a_v22sg
 
@@ -374,11 +431,25 @@ define Device/psg1218b
 endef
 TARGET_DEVICES += psg1218b
 
+define Device/phicomm_k2g
+  DTS := K2G
+  IMAGE_SIZE := 7552k
+  DEVICE_TITLE := Phicomm K2G
+  DEVICE_PACKAGES := kmod-mt76x2
+endef
+TARGET_DEVICES += phicomm_k2g
+
 define Device/rp-n53
   DTS := RP-N53
   DEVICE_TITLE := Asus RP-N53
 endef
 TARGET_DEVICES += rp-n53
+
+define Device/rt-n12p
+  DTS := RT-N12-PLUS
+  DEVICE_TITLE := Asus RT-N11P/RT-N12+/RT-N12Eb1
+endef
+TARGET_DEVICES += rt-n12p
 
 define Device/rt-n14u
   DTS := RT-N14U
@@ -400,6 +471,35 @@ define Device/tiny-ac
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
 endef
 TARGET_DEVICES += tiny-ac
+
+define Device/tplink_c20-v1
+  $(Device/Archer)
+  DTS := ArcherC20v1
+  TPLINK_FLASHLAYOUT := 8Mmtk
+  TPLINK_HWID := 0xc2000001
+  TPLINK_HWREV := 0x44
+  TPLINK_HWREVADD := 0x1
+  IMAGES += factory.bin
+  DEVICE_TITLE := TP-Link ArcherC20 v1
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport
+endef
+TARGET_DEVICES += tplink_c20-v1
+
+define Device/vonets_var11n-300
+  DTS := VAR11N-300
+  IMAGE_SIZE := $(ralink_default_fw_size_4M)
+  BLOCKSIZE := 4k
+  DEVICE_TITLE := Vonets VAR11N-300
+endef
+TARGET_DEVICES += vonets_var11n-300
+
+define Device/ravpower_wd03
+  DTS := WD03
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := Ravpower WD03
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-mt76 kmod-usb-ehci
+endef
+TARGET_DEVICES += ravpower_wd03
 
 define Device/whr-1166d
   DTS := WHR-1166D
@@ -434,7 +534,7 @@ define Device/wn3000rpv3
   DTS := WN3000RPV3
   BLOCKSIZE := 4k
   IMAGES += factory.bin
-  KERNEL := $(KERNEL_DTB) | uImage lzma | pad-offset 64k 64 | append-uImage-fakeroot-hdr
+  KERNEL := $(KERNEL_DTB) | uImage lzma | pad-offset 64k 64 | append-uImage-fakehdr filesystem
   IMAGE/factory.bin := $$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | \
 	netgear-dni
   DEVICE_TITLE := Netgear WN3000RPv3
@@ -478,6 +578,7 @@ define Device/wt3020-8M
   IMAGE/factory.bin := $$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | \
 	poray-header -B WT3020 -F 8M
   DEVICE_TITLE := Nexx WT3020 (8MB)
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
 endef
 TARGET_DEVICES += wt3020-8M
 
@@ -497,8 +598,9 @@ TARGET_DEVICES += y1s
 
 define Device/youku-yk1
   DTS := YOUKU-YK1
-  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
   DEVICE_TITLE := YOUKU YK1
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport
 endef
 TARGET_DEVICES += youku-yk1
 

@@ -1,5 +1,14 @@
 
+PKG_TARGETS := bin
+PKG_FLAGS:=nonshared
+
 export GCC_HONOUR_COPTS=s
+
+define Package/at91bootstrap/install/default
+  $(CP) -avL $(PKG_BUILD_DIR)/binaries/at91bootstrap.bin $(1)/
+endef
+
+Package/at91bootstrap/install = $(Package/at91bootstrap/install/default)
 
 define AT91Bootstrap/Init
   BUILD_TARGET:=
@@ -17,7 +26,7 @@ TARGET_DEP = TARGET_$(BUILD_TARGET)$(if $(BUILD_SUBTARGET),_$(BUILD_SUBTARGET))
 
 AT91BOOTSTRAP_MAKE_FLAGS = \
 	HOSTCC="$(HOSTCC)" \
-	HOSTCFLAGS='$(HOST_CFLAGS) $$$$(HOSTCPPFLAGS)' \
+	HOSTCFLAGS="$(HOST_CFLAGS) $(HOST_CPPFLAGS)" \
 	HOSTLDFLAGS=""
 
 define Build/AT91Bootstrap/Target
@@ -46,8 +55,7 @@ define Build/AT91Bootstrap/Target
   endef
 
   define Package/at91bootstrap-$(1)/install
-    $(CP) $(PKG_BUILD_DIR)/binaries/*uboot*.bin \
-      $(BIN_DIR)/at91bootstrap-$(1).bin
+    $$(Package/at91bootstrap/install)
   endef
 endef
 

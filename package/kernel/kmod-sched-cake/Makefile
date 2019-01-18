@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=sched-cake
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/dtaht/sch_cake.git
-PKG_SOURCE_DATE:=2017-01-28
-PKG_SOURCE_VERSION:=9789742cfc596d48583ba4cdbc8f38d026121fa6
-PKG_MIRROR_HASH:=2a5afc45722c28ca8778eb50452eb305306e7898b32d7d6d73d3e77edf3cce99
+PKG_SOURCE_DATE:=2018-09-11
+PKG_SOURCE_VERSION:=42e87f12ea5c390bf5eeb658c942bc810046160a
+PKG_MIRROR_HASH:=56c71ae079e4c64aef2564d42d2efd31621e7e9f5220844ad1ea795e2f1cb1fd
+PKG_MAINTAINER:=Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
 
 include $(INCLUDE_DIR)/package.mk
 
