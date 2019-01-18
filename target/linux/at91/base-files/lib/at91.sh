@@ -46,6 +46,9 @@ at91_board_detect() {
 	*"Atmel SAMA5D27 SOM1 EK")
 		name="sama5d27_som1_ek"
 		;;
+	*"Atmel SAMA5D27 SOM1 SC")
+		name="sama5d27_som1_sc"
+		;;
 	*"Atmel SAMA5D2 PTC EK")
 		name="sama5d2_ptc_ek"
 		;;

@@ -13,8 +13,8 @@ PKG_VERSION:=linux4sam_6.0
 PKG_RELEASE:=
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/linux4sam/dt-overlay-at91.git
-PKG_SOURCE_VERSION:=17a984bc196f124e7fb3a98eb2a6c96368181340
+PKG_SOURCE_URL:=https://github.com/Reseiwe/dt-overlay-at91.git
+PKG_SOURCE_VERSION:=master
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -50,11 +50,18 @@ define AT91DTOverlay/sama5d27_som1_ek
   BUILD_DEVICES:=at91-sama5d27_som1_ek
 endef
 
+define AT91DTOverlay/sama5d27_som1_sc
+  TITLE:=AT91DTOverlay for SAMA5D27 SOM1 SC
+  BUILD_SUBTARGET:=sama5d2
+  BUILD_DEVICES:=at91-sama5d27_som1_sc
+endef
+
 AT91DTOVERLAY_TARGETS := \
     sama5d2_xplained \
     sama5d3_xplained \
     sama5d4_xplained \
-    sama5d27_som1_ek
+    sama5d27_som1_ek \
+    sama5d27_som1_sc
 
 define Build/Compile
   $(MAKE) DTC=$(LINUX_DIR)/scripts/dtc/dtc KERNEL_DIR=$(LINUX_DIR) -C $(PKG_BUILD_DIR) $(BUILD_DEVICES:at91-%=%)_dtbos

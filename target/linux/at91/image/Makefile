@@ -11,6 +11,7 @@ KERNEL_LOADADDR := 0x20008000
 
 define Build/at91-install-zImage
     $(CP) $(KDIR)/zImage $@
+#    cp ../files/arch/arm/boot/dts/at91-sama5d27_som1_sc.dts $(LINUX_DIR)/arch/arm/boot/dts/
 endef
 
 ifeq ($(SUBTARGET),legacy)

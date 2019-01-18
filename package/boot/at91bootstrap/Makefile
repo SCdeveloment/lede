@@ -13,8 +13,8 @@ PKG_VERSION:=v3.8.11
 PKG_RELEASE:=
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/linux4sam/at91bootstrap.git
-PKG_SOURCE_VERSION:=e1fba3b7e32d562bad82cd7556c0523e17074be0
+PKG_SOURCE_URL:=https://github.com/Reseiwe/at91bootstrap.git
+PKG_SOURCE_VERSION:=master
 
 PKG_BUILD_DIR = \
     $(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -88,6 +88,12 @@ define AT91Bootstrap/sama5d27_som1_eksd1_uboot
   BUILD_DEVICES:=at91-sama5d27_som1_ek
 endef
 
+define AT91Bootstrap/sama5d27_som1_scsd1_uboot
+  TITLE:=AT91Bootstrap for SAMA5D27 SOM1 SC (SDcard1)
+  BUILD_SUBTARGET:=sama5d2
+  BUILD_DEVICES:=at91-sama5d27_som1_sc
+endef
+
 define AT91Bootstrap/sama5d27_som1_ekqspi_uboot
   TITLE:=AT91Bootstrap for SAMA5D27 SOM1 Ek (QSPI Flash)
   BUILD_SUBTARGET:=sama5d2
@@ -116,6 +122,7 @@ AT91BOOTSTRAP_TARGETS := \
     sama5d4_xplaineddf_uboot_secure \
     sama5d4_xplainedsd_uboot_secure \
 	sama5d27_som1_eksd_uboot \
+	sama5d27_som1_scsd1_uboot \
 	sama5d27_som1_ekqspi_uboot \
 	sama5d2_ptc_eknf_uboot \
     sama5d2_ptc_eksd_uboot

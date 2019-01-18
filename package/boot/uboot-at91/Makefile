@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=linux4sam_6.0
+PKG_VERSION:=at91-linux4sam_6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/linux4sam/u-boot-at91.git
-PKG_SOURCE_VERSION:=1e7d2e5973c1fb780e55e28a801c6c574158ac14
+PKG_SOURCE_URL:=https://github.com/Reseiwe/u-boot-at91.git
+PKG_SOURCE_VERSION:=master
 
 include $(INCLUDE_DIR)/u-boot.mk
 include $(INCLUDE_DIR)/package.mk
@@ -86,6 +86,12 @@ define U-Boot/sama5d27_som1_ek_mmc
   BUILD_DEVICES:=at91-sama5d27_som1_ek
 endef
 
+define U-Boot/sama5d27_som1_sc_mmc
+  NAME:=SAMA5D27 SOM1 SC (SDCard 1)
+  BUILD_SUBTARGET:=sama5d2
+  BUILD_DEVICES:=at91-sama5d27_som1_sc
+endef
+
 define U-Boot/sama5d2_ptc_ek_nandflash
   NAME:=SAMA5D2 PTC Ek (Nand Flash)
   BUILD_SUBTARGET:=sama5d2
@@ -108,16 +114,23 @@ UBOOT_TARGETS := \
 	sama5d4_xplained_mmc \
 	sama5d4_xplained_spiflash \
 	sama5d4_xplained_nandflash\
-    sama5d27_som1_ek_mmc \
+	sama5d27_som1_ek_mmc \
+	sama5d27_som1_sc_mmc \
 	sama5d2_ptc_ek_nandflash \
 	sama5d2_ptc_ek_mmc
 
+define Build/Prepare
+	$(Build/Prepare/Default)
+	cp -r files/*_defconfig $(PKG_BUILD_DIR)/configs/
+	cp -r files/*.h $(PKG_BUILD_DIR)/include/configs/
+endef
+
 define Build/Compile
-  +$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-     CROSS_COMPILE=$(TARGET_CROSS) \
+	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+	 CROSS_COMPILE=$(TARGET_CROSS) \
 	 DTC=$(LINUX_DIR)/scripts/dtc/dtc \
-     KCFLAGS="$(filter-out -fstack-protector \
-      -mfloat-abi=hard, $(TARGET_CFLAGS)) -mfloat-abi=soft -Wno-format-security"
+	 KCFLAGS="$(filter-out -fstack-protector \
+	 -mfloat-abi=hard, $(TARGET_CFLAGS)) -mfloat-abi=soft -Wno-format-security"
 endef
 
 $(eval $(call BuildPackage/U-Boot))
