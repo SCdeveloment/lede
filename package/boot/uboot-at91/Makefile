@@ -119,11 +119,11 @@ UBOOT_TARGETS := \
 	sama5d2_ptc_ek_nandflash \
 	sama5d2_ptc_ek_mmc
 
-define Build/Prepare
-	$(Build/Prepare/Default)
-	cp -r files/*_defconfig $(PKG_BUILD_DIR)/configs/
-	cp -r files/*.h $(PKG_BUILD_DIR)/include/configs/
-endef
+#define Build/Prepare
+#	$(Build/Prepare/Default)
+#	cp -r files/*_defconfig $(PKG_BUILD_DIR)/configs/
+#	cp -r files/*.h $(PKG_BUILD_DIR)/include/configs/
+#endef
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
