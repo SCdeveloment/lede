@@ -13,7 +13,7 @@ PKG_VERSION:=v3.8.11
 PKG_RELEASE:=
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Reseiwe/at91bootstrap.git
+PKG_SOURCE_URL:=https://github.com/snedker/at91bootstrap.git
 PKG_SOURCE_VERSION:=master
 
 PKG_BUILD_DIR = \

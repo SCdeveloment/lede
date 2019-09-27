@@ -13,7 +13,7 @@ PKG_VERSION:=linux4sam_6.0
 PKG_RELEASE:=
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Reseiwe/dt-overlay-at91.git
+PKG_SOURCE_URL:=https://github.com/snedker/dt-overlay-at91.git
 PKG_SOURCE_VERSION:=master
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
